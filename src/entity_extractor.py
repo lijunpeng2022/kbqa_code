@@ -4,7 +4,7 @@ import codecs as cs
 import pickle
 from gstore import GetRelations_2hop, GetRelationNum
 import thulac
-
+import time
 
 def features_from_two_sequences(s1, s2):
     # overlap
@@ -70,8 +70,11 @@ class SubjectExtractor(object):
         """
         # 得到主语-谓词的tokens及chars
         p_tokens = []
+
+        # 可并行
         for p in relations:
             p_tokens.extend(self.segger.cut(p[1:-1]))
+        
         p_tokens = [token[0] for token in p_tokens]
         p_chars = [char for char in ''.join(p_tokens)]
 
@@ -84,7 +87,9 @@ class SubjectExtractor(object):
         e_chars = [char for char in entity[1:-1]]
 
         qe_feature = features_from_two_sequences(q_tokens, e_tokens) + features_from_two_sequences(q_chars, e_chars)
+
         qr_feature = features_from_two_sequences(q_tokens, p_tokens) + features_from_two_sequences(q_chars, p_chars)
+
         # 实体名和问题的overlap除以实体名长度的比例
         return qe_feature + qr_feature
 
@@ -98,10 +103,11 @@ class SubjectExtractor(object):
             candidate_subject: {str:list}
         """
         candidate_subject = {}
-        
+
         for mention in entity_mentions:  # 遍历每一个mention
             # 过滤词性明显不对的mention
             poses = self.segger.cut(mention)
+
             if len(poses) == 1 and poses[0][1] in self.not_pos:
                 continue
             # 过滤停用词
@@ -114,7 +120,7 @@ class SubjectExtractor(object):
                     # 得到实体两跳内的所有关系
                     entity = '<'+entity+'>'
                     relations = self.entity2hop_dic.get(entity, {})
-
+                    
                     # 计算问题和主语实体及其两跳内关系间的相似度
                     similar_features = self.compute_entity_features(question, entity, relations)
 
@@ -124,4 +130,5 @@ class SubjectExtractor(object):
                     else:
                         popular_feature = GetRelationNum(entity)
                     candidate_subject[entity] = mention_features + similar_features + [popular_feature ** 0.5]
+
         return candidate_subject

@@ -11,7 +11,7 @@ import json
 # before you run this example, make sure that you have started up ghttp service (using bin/ghttp port)
 # "GET" is a default parameter that can be omitted
 IP = "10.1.31.20"
-Port = 9000
+Port = 9012
 username = "root"
 password = "123456"
 KG_NAME="pkubase"
